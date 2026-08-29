@@ -111,6 +111,22 @@ def profile():
         "email": user.email
     }, 200
 
+# vulnerable route to demonstrate Insecure Direct Object Reference (IDOR) vulnerability
+@app.route("/user/<int:user_id>", methods=["GET"])
+def get_user(user_id):
+    
+    user = User.query.get(user_id)  # vulnerable to IDOR, as it allows access to any user's data without proper authorization checks
+
+    if not user:
+        return {"message": "User not found"}, 404
+
+    return {
+        "id": user.id,
+        "username": user.username,
+        "email": user.email
+    }, 200
+
+
 # main function to run the app
 def main():
     with app.app_context():
