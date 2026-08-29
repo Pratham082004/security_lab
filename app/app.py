@@ -1,4 +1,4 @@
-﻿from flask import Flask
+﻿from flask import Flask, request, session
 from database import db
 from models import User
 
@@ -7,6 +7,7 @@ from models import User
 
 app = Flask(__name__)
 
+app.config["SECRET_KEY"] = "dev-secret-key-change-this-later"
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -15,9 +16,9 @@ db.init_app(app)
 #app.register_blueprint(auth_bp)
 #app.register_blueprint(users_bp)
 
-@app.route('/health')
+@app.route('/')
 def hello_world():
-    return 'Healthy!'
+    return 'Security Lab!'
 
 # using the following route to initialize the database with some users for testing purposes
 
@@ -68,7 +69,49 @@ def hello_world():
 #     }
 
 
+# user login route
+@app.route("/login", methods=["POST"])
+def login():
 
+    json_data = request.get_json()
+
+    username = json_data.get("username")
+    password = json_data.get("password")
+
+    user = User.query.filter_by(username=username, password=password).first()
+
+    if not user or user.password != password:
+        return {"message": "Invalid username or password"}, 401
+
+    session["user_id"] = user.id
+
+    return {"message": "Login successful", "user_id": user.id}, 200
+
+
+# user logout route
+@app.route("/logout", methods=["POST"])
+def logout():
+    session.clear()
+    return {"message": "Logout successful"}, 200
+
+
+# user profile route
+@app.route("/profile", methods=["GET"])
+def profile():
+    user_id = session.get("user_id")
+
+    if not user_id:
+        return {"message": "Authentication required"}, 401
+
+    user = User.query.get(user_id)
+
+    return {
+        "id": user.id,
+        "username": user.username,
+        "email": user.email
+    }, 200
+
+# main function to run the app
 def main():
     with app.app_context():
         db.create_all()
