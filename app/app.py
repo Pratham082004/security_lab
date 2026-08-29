@@ -114,6 +114,15 @@ def profile():
 # vulnerable route to demonstrate Insecure Direct Object Reference (IDOR) vulnerability
 @app.route("/user/<int:user_id>", methods=["GET"])
 def get_user(user_id):
+
+    #fixed vulnerability by checking if the current user is the same as the requested user
+    
+    current_user_id = session.get("user_id")
+    if not current_user_id:
+        return {"message": "Authentication required"}, 401
+
+    if current_user_id != user_id:
+        return {"message": "Unauthorized access"}, 403
     
     user = User.query.get(user_id)  # vulnerable to IDOR, as it allows access to any user's data without proper authorization checks
 
