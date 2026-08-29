@@ -1,18 +1,8 @@
-﻿"""Application models."""
-
-from dataclasses import dataclass
+﻿from database import db
 
 
-@dataclass
-class BaseModel:
-    """Simple base model for application entities."""
-    id: int | None = None
-
-
-def create_model() -> BaseModel:
-    """Create a simple model instance."""
-    return BaseModel()
-
-
-if __name__ == '__main__':
-    print(create_model())
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password = db.Column(db.String(200), nullable=False)
