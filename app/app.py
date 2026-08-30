@@ -173,10 +173,10 @@ def search_user():
     username = request.args.get("username", "")
 
     # vulnerable to SQL Injection, as it directly concatenates user input into the SQL query without proper sanitization or parameterization
-    # http://127.0.0.1:5000/search?username=alice%27%20OR%20%271%27=%271
-    query = text(f"SELECT * FROM user WHERE username = '{username}'")  
+    # http://127.0.0.1:5000/search?username=alice%27%20OR%20%271%27=%271 
+    query = text("SELECT * FROM user WHERE username = :username")   
 
-    result = db.session.execute(query)
+    result = db.session.execute(query, {"username": username})
 
     users = []
 
