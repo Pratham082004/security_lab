@@ -1,6 +1,7 @@
 ﻿from flask import Flask, request, session
 from database import db
 from models import User
+from sqlalchemy import text
 
 #from app.routes.auth import bp as auth_bp
 #from app.routes.users import bp as users_bp
@@ -164,6 +165,30 @@ def admin_users():
             for user in users
         ]
     }, 200
+
+# vulnerable route to demonstrate SQL Injection vulnerability
+@app.route("/search", methods=["GET"])
+def search_user():
+
+    username = request.args.get("username", "")
+
+    # vulnerable to SQL Injection, as it directly concatenates user input into the SQL query without proper sanitization or parameterization
+    # http://127.0.0.1:5000/search?username=alice%27%20OR%20%271%27=%271
+    query = text(f"SELECT * FROM user WHERE username = '{username}'")  
+
+    result = db.session.execute(query)
+
+    users = []
+
+    for row in result:
+        users.append({
+            "id": row.id,
+            "username": row.username,
+            "email": row.email,
+            "role": row.role
+        })
+
+    return {"users": users}, 200
 
 
 # main function to run the app
