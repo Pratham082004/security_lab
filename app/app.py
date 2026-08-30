@@ -30,17 +30,20 @@ def hello_world():
 #             User(
 #                 username="alice",
 #                 email="alice@example.com",
-#                 password="alice123"
+#                 password="alice123",
+#                 role="user"
 #             ),
 #             User(
 #                 username="bob",
 #                 email="bob@example.com",
-#                 password="bob123"
+#                 password="bob123",
+#                 role="user"
 #             ),
 #             User(
 #                 username="charlie",
 #                 email="charlie@example.com",
-#                 password="charlie123"
+#                 password="charlie123",
+#                 role="admin"
 #             )
 #         ]
 
@@ -103,7 +106,7 @@ def profile():
     if not user_id:
         return {"message": "Authentication required"}, 401
 
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
 
     return {
         "id": user.id,
@@ -124,7 +127,7 @@ def get_user(user_id):
     if current_user_id != user_id:
         return {"message": "Unauthorized access"}, 403
     
-    user = User.query.get(user_id)  # vulnerable to IDOR, as it allows access to any user's data without proper authorization checks
+    user = db.session.get(User, user_id)  # vulnerable to IDOR, as it allows access to any user's data without proper authorization checks
 
     if not user:
         return {"message": "User not found"}, 404
@@ -133,6 +136,33 @@ def get_user(user_id):
         "id": user.id,
         "username": user.username,
         "email": user.email
+    }, 200
+
+# admin-only route to demonstrate access control
+@app.route("/admin/users")
+def admin_users():
+    current_user_id = session.get("user_id")
+
+    if not current_user_id:
+        return {"message": "Authentication required"}, 401
+
+    user = db.session.get(User, current_user_id)
+
+    if not user or user.role != "admin":
+        return {"message": "Admin access required"}, 403
+
+    users = User.query.all()
+
+    return {
+        "users": [
+            {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "role": user.role
+            }
+            for user in users
+        ]
     }, 200
 
 
