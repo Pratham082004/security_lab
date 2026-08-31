@@ -1,4 +1,4 @@
-﻿from flask import Flask, request, session
+﻿from flask import Flask, request, session, render_template_string
 from database import db
 from models import User
 from sqlalchemy import text
@@ -190,6 +190,35 @@ def search_user():
 
     return {"users": users}, 200
 
+
+# vulnerable route to demonstrate Cross-Site Scripting (XSS) vulnerability
+@app.route("/comment", methods=["GET", "POST"])
+def comment():
+
+    if request.method == "POST":
+        username = request.form.get("username", "")
+        message = request.form.get("message", "")
+
+        # vulnerable to XSS, as it directly renders user input without proper escaping or sanitization
+        return render_template_string("""
+            <h1>Comment</h1>
+
+            <p><strong>{{ username }}</strong></p>
+
+            <div>
+                {{ message | safe }}
+            </div>
+        """, username=username, message=message)
+    
+    # GET request, render the comment form
+    
+    return """
+        <form method="POST">
+            <input name="username" placeholder="Username">
+            <textarea name="message"></textarea>
+            <button type="submit">Post Comment</button>
+        </form>
+    """
 
 # main function to run the app
 def main():
