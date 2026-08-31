@@ -206,7 +206,7 @@ def comment():
             <p><strong>{{ username }}</strong></p>
 
             <div>
-                {{ message | safe }}
+                {{ message }} 
             </div>
         """, username=username, message=message)
     
