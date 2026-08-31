@@ -4,6 +4,7 @@ from flask import Flask, request, session, render_template_string
 from database import db
 from models import User
 from sqlalchemy import text
+from werkzeug.security import generate_password_hash, check_password_hash
 
 #from app.routes.auth import bp as auth_bp
 #from app.routes.users import bp as users_bp
@@ -25,54 +26,54 @@ def hello_world():
 
 # using the following route to initialize the database with some users for testing purposes
 
-# @app.route("/init-users")
-# def init_users():
+@app.route("/init-users")
+def init_users():
 
-#     if User.query.count() == 0:
-#         users = [
-#             User(
-#                 username="alice",
-#                 email="alice@example.com",
-#                 password="alice123",
-#                 role="user"
-#             ),
-#             User(
-#                 username="bob",
-#                 email="bob@example.com",
-#                 password="bob123",
-#                 role="user"
-#             ),
-#             User(
-#                 username="charlie",
-#                 email="charlie@example.com",
-#                 password="charlie123",
-#                 role="admin"
-#             )
-#         ]
+    if User.query.count() == 0:
+        users = [
+            User(
+                username="alice",
+                email="alice@example.com",
+                password=generate_password_hash("alice123"),
+                role="user"
+            ),
+            User(
+                username="bob",
+                email="bob@example.com",
+                password=generate_password_hash("bob123"),
+                role="user"
+            ),
+            User(
+                username="charlie",
+                email="charlie@example.com",
+                password=generate_password_hash("charlie123"),
+                role="admin"
+            )
+        ]
 
-#         db.session.add_all(users)
-#         db.session.commit()
+        db.session.add_all(users)
+        db.session.commit()
 
-#     return {
-#         "message": "Users initialized",
-#         "users": User.query.count()
-#     }
+    return {
+        "message": "Users initialized",
+        "users": User.query.count()
+    }
 
-# @app.route("/users")
-# def users():
+@app.route("/users")
+def users():
 
-#     users = User.query.all()
+    users = User.query.all()
 
-#     return {
-#         "users": [
-#             {
-#                 "id": user.id,
-#                 "username": user.username,
-#                 "email": user.email
-#             }
-#             for user in users
-#         ]
-#     }
+    return {
+        "users": [
+            {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email
+            }
+            for user in users
+        ]
+    }
 
 
 # user login route
@@ -84,9 +85,10 @@ def login():
     username = json_data.get("username")
     password = json_data.get("password")
 
-    user = User.query.filter_by(username=username, password=password).first()
+    user = User.query.filter_by(username=username).first()
 
-    if not user or user.password != password:
+    # hashing the password and checking it against the stored hash to verify the password
+    if not user or not check_password_hash(user.password, password):
         return {"message": "Invalid username or password"}, 401
 
     session["user_id"] = user.id
@@ -235,7 +237,7 @@ def change_email():
 
     # check for CSRF token in the request
     csrf_token = request.form.get("csrf_token")
-    
+
     if not csrf_token or csrf_token != session.get("csrf_token"):
         return {"message": "Invalid CSRF token"}, 403
 
