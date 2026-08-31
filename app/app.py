@@ -1,4 +1,6 @@
-﻿from flask import Flask, request, session, render_template_string
+﻿import secrets
+
+from flask import Flask, request, session, render_template_string
 from database import db
 from models import User
 from sqlalchemy import text
@@ -89,7 +91,10 @@ def login():
 
     session["user_id"] = user.id
 
-    return {"message": "Login successful", "user_id": user.id}, 200
+    # generate csrf token and store it in the session
+    session["csrf_token"] = secrets.token_hex(32)
+
+    return {"message": "Login successful", "user_id": user.id, "token":session["csrf_token"]}, 200
 
 
 # user logout route
@@ -227,6 +232,12 @@ def change_email():
 
     if not user_id:
         return {"message": "Authentication required"}, 401
+
+    # check for CSRF token in the request
+    csrf_token = request.form.get("csrf_token")
+    
+    if not csrf_token or csrf_token != session.get("csrf_token"):
+        return {"message": "Invalid CSRF token"}, 403
 
     user = User.query.get(user_id)
 
