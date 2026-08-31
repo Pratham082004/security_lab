@@ -220,6 +220,27 @@ def comment():
         </form>
     """
 
+# vulnerable route to demonstrate cross-site request forgery (CSRF) vulnerability
+@app.route("/change-email", methods=["POST"])
+def change_email():
+    user_id = session.get("user_id")
+
+    if not user_id:
+        return {"message": "Authentication required"}, 401
+
+    user = User.query.get(user_id)
+
+    if not user:
+        return {"message": "User not found"}, 404
+
+    new_email = request.form.get("email")
+
+    user.email = new_email
+    db.session.commit()
+
+    return {"message": "Email updated successfully"}, 200
+
+
 # main function to run the app
 def main():
     with app.app_context():
